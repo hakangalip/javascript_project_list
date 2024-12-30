@@ -1,9 +1,9 @@
 class DOMHelper {
-
+  
   static clearEventListeners(element) {
-     const clonedElement = element.cloneNode(true);
-     element.replaceWith(clonedElement);
-     return clonedElement;
+    const clonedElement = element.cloneNode(true);
+    element.replaceWith(clonedElement);
+    return clonedElement;
   }
 
   static moveElement(elementId, newDestinationSelector) {
@@ -11,12 +11,37 @@ class DOMHelper {
     const destinationElement = document.querySelector(newDestinationSelector);
     destinationElement.append(element);
   }
-
 }
 
-class Tooltip {}
+class Tooltip {
+
+  constructor(closeNotifierFn) {
+     this.closeNotifier = closeNotifierFn;
+  }
+
+  closeToolTip = () => {
+     this.detach();
+     this.closeNotifier();
+  }
+
+  detach() {
+    this.element.remove();
+    //  this.element.parentElement.removeChild(this.element);
+  };
+
+  attach() {
+    const tooltipElement = document.createElement("div");
+    tooltipElement.className = "card";
+    tooltipElement.textContent = "DUMMY";
+    tooltipElement.addEventListener("click", this.closeToolTip.bind(this));
+    this.element = tooltipElement;
+    document.body.appendChild(tooltipElement);
+  }
+}
 
 class ProjectItem {
+
+  hasActiveTooltip = false;
 
   constructor(id, updateProjectListsFunction, type) {
     this.id = id;
@@ -25,27 +50,44 @@ class ProjectItem {
     this.connectSwitchButton(type);
   }
 
-  connectMoreInfoButton() {}
+  showMoreInfoHandler() {
+    if (this.hasActiveTooltip) {
+        return;
+    }
+    const tooltip = new Tooltip(() => {
+      this.hasActiveTooltip = false;
+    });
+    tooltip.attach();
+    this.hasActiveTooltip = true
+  }
+
+  connectMoreInfoButton() {
+    const projectItemElement = document.getElementById(this.id);
+    let moreInfoButton = projectItemElement.querySelector(
+      "button:first-of-type"
+    );
+    moreInfoButton.addEventListener("click", this.showMoreInfoHandler);
+  }
 
   connectSwitchButton(type) {
     const projectItemElement = document.getElementById(this.id);
-    let switchButton = projectItemElement.querySelector(
-      "button:last-of-type"
-    );
+    let switchButton = projectItemElement.querySelector("button:last-of-type");
     switchButton = DOMHelper.clearEventListeners(switchButton);
-    switchButton.textContent = type === 'active' ? 'Finish' : 'Activate';
-    switchButton.addEventListener("click", this.updateProjectListsHandler.bind(null, this.id));
+    switchButton.textContent = type === "active" ? "Finish" : "Activate";
+    switchButton.addEventListener(
+      "click",
+      this.updateProjectListsHandler.bind(null, this.id)
+      // The project.id were stored here into the ProjectList
+    );
   }
 
   update(updateProjectListsFn, type) {
     this.updateProjectListsHandler = updateProjectListsFn;
     this.connectSwitchButton(type);
   }
-
 }
 
 class ProjectList {
-
   projects = [];
 
   constructor(type) {
@@ -66,14 +108,15 @@ class ProjectList {
   addProject(project) {
     this.projects.push(project);
     DOMHelper.moveElement(project.id, `#${this.type}-projects ul`);
-    project.update(this.switchProject.bind(this),this.type);
+    project.update(this.switchProject.bind(this), this.type);
     // project.update is possible, because we have access to this project list in this ul
   }
 
   switchProject(projectId) {
-    this.switchHandler(this.projects.find(p => p.id === projectId));
-    this.projects = this.projects.filter(p => p.id !== projectId);
+    this.switchHandler(this.projects.find((p) => p.id === projectId));
+    this.projects = this.projects.filter((p) => p.id !== projectId);
   }
+  
 }
 
 class App {
