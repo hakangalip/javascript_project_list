@@ -7,8 +7,14 @@
     <title>Project Board</title>
     <link rel="stylesheet" href="assets/styles/app.css" />
     <script src="assets/scripts/app.js" defer></script>
+    <!-- <script src="assets/scripts/analytics.js" defer></script> -->
   </head>
   <body>
+    <!-- Template will not when the page is load at the beginning  -->
+    <template id="tooltip">
+        <h2>More info</h2>
+        <p></p>
+    </template>
     <header id="main-header">
       <h1>Project Planner</h1>
     </header>
@@ -59,5 +65,9 @@
         </li>
       </ul>
     </section>
+    <footer>
+        <button id="start-analytics-button">Start analytics</button>
+        <button id="stop-analytics-button">Stop analytice</button>
+    </footer>
   </body>
 </html>

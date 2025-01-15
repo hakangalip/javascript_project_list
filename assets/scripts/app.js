@@ -1,5 +1,4 @@
 class DOMHelper {
-  
   static clearEventListeners(element) {
     const clonedElement = element.cloneNode(true);
     element.replaceWith(clonedElement);
@@ -10,37 +9,80 @@ class DOMHelper {
     const element = document.getElementById(elementId);
     const destinationElement = document.querySelector(newDestinationSelector);
     destinationElement.append(element);
+    element.scrollIntoView({ behavior: "smooth" });
   }
 }
 
-class Tooltip {
+class Component {
+  // When is see this at first time, i was very perplex, now i understand it clear
 
-  constructor(closeNotifierFn) {
-     this.closeNotifier = closeNotifierFn;
-  }
-
-  closeToolTip = () => {
-     this.detach();
-     this.closeNotifier();
+  constructor(hostElementId, insertBefore = false) {
+    if (hostElementId) {
+      // This are only the projects id's, no list id is needed
+      this.hostElement = document.getElementById(hostElementId);
+    } else {
+      this.hostElement = document.body;
+    }
+    this.insertBefore = insertBefore;
+    // We can search where the tooltip will placed, (this.element)
   }
 
   detach() {
-    this.element.remove();
-    //  this.element.parentElement.removeChild(this.element);
-  };
+    if (this.element) {
+      this.element.remove();
+    }
+  }
 
   attach() {
+    this.hostElement.insertAdjacentElement(
+      this.insertBefore ? "beforeend" : "afterend",
+      this.element
+    );
+  }
+} // Component ends here
+
+class Tooltip extends Component {
+  constructor(closeNotifierFn, text, hostElementId) {
+    super(hostElementId);
+    this.closeNotifier = closeNotifierFn;
+    this.text = text;
+    this.create();
+  }
+
+  closeToolTip = () => {
+    this.detach();
+    this.closeNotifier();
+  };
+
+  create() {
     const tooltipElement = document.createElement("div");
     tooltipElement.className = "card";
-    tooltipElement.textContent = "DUMMY";
+
+    const tooltipTemplate = document.getElementById("tooltip");
+    const tooltipBody = document.importNode(tooltipTemplate.content, true);
+    tooltipBody.querySelector("p").textContent = this.text;
+    tooltipElement.append(tooltipBody);
+    // console.log(this.hostElement.getBoundingClientRect());
+
+    const hostElLeft = this.hostElement.offsetLeft;
+    const hostElTop = this.hostElement.offsetTop;
+    const hostElHeight = this.hostElement.clientHeight;
+    let parentElementScrolling = this.hostElement.parentElement.scrollTop;
+
+    tooltipElement.style.position = "absolute";
+
+    const x = hostElLeft + 20;
+    const y = hostElTop + hostElHeight - parentElementScrolling - 10;
+
+    tooltipElement.style.left = x + "px";
+    tooltipElement.style.top = y + "px";
+
     tooltipElement.addEventListener("click", this.closeToolTip.bind(this));
     this.element = tooltipElement;
-    document.body.appendChild(tooltipElement);
   }
 }
 
 class ProjectItem {
-
   hasActiveTooltip = false;
 
   constructor(id, updateProjectListsFunction, type) {
@@ -51,14 +93,23 @@ class ProjectItem {
   }
 
   showMoreInfoHandler() {
+    // projectElement.dataset.someInfo = "Anything you want";
+    // // We can set our own dataset text
     if (this.hasActiveTooltip) {
-        return;
+      return;
     }
-    const tooltip = new Tooltip(() => {
-      this.hasActiveTooltip = false;
-    });
+    const projectElement = document.getElementById(this.id);
+    const tooltipText = projectElement.dataset.extraInfo;
+
+    const tooltip = new Tooltip(
+      () => {
+        this.hasActiveTooltip = false;
+      },
+      tooltipText,
+      this.id
+    );
     tooltip.attach();
-    this.hasActiveTooltip = true
+    this.hasActiveTooltip = true;
   }
 
   connectMoreInfoButton() {
@@ -66,13 +117,18 @@ class ProjectItem {
     let moreInfoButton = projectItemElement.querySelector(
       "button:first-of-type"
     );
-    moreInfoButton.addEventListener("click", this.showMoreInfoHandler);
+    moreInfoButton.addEventListener(
+      "click",
+      this.showMoreInfoHandler.bind(this)
+    );
   }
 
   connectSwitchButton(type) {
     const projectItemElement = document.getElementById(this.id);
+
     let switchButton = projectItemElement.querySelector("button:last-of-type");
     switchButton = DOMHelper.clearEventListeners(switchButton);
+
     switchButton.textContent = type === "active" ? "Finish" : "Activate";
     switchButton.addEventListener(
       "click",
@@ -116,10 +172,10 @@ class ProjectList {
     this.switchHandler(this.projects.find((p) => p.id === projectId));
     this.projects = this.projects.filter((p) => p.id !== projectId);
   }
-  
 }
 
 class App {
+
   static init() {
     const activeProjectList = new ProjectList("active");
     const finishedProjectList = new ProjectList("finished");
@@ -129,6 +185,20 @@ class App {
     finishedProjectList.setSwitchHandlerFunction(
       activeProjectList.addProject.bind(activeProjectList)
     );
+    //  document.getElementById('start-analytics-button')
+    //  .addEventListener('click', ()=>{
+    //     this.startAnalytics();
+    //  })
+    setTimeout(this.startAnalytics, 3000);
+    // setTimeout(()=>{
+    //   this.startAnalytics();
+    // }, 3000)
+  }
+  static startAnalytics() {
+    const analyticsScript = document.createElement('script');
+    analyticsScript.src = 'assets/scripts/analytics.js';
+    analyticsScript.defer = true;
+    document.head.append(analyticsScript);
   }
 }
 

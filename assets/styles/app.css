@@ -110,6 +110,7 @@ button:active {
 
 #finished-projects {
   border: 1px solid #535353;
+  margin-bottom: 100px;
 }
 
 #finished-projects > header {
@@ -123,4 +124,18 @@ button:active {
 #finished-projects header h2 {
   color: white;
   margin: 0;
+}
+
+footer{
+  position: relative;
+}
+
+#start-analytics-button{
+  position: absolute;
+  bottom: 0;
+}
+
+#stop-analytics-button{
+  position: absolute;
+  bottom: 40px;
 }
