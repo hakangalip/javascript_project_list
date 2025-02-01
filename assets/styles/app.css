@@ -139,3 +139,7 @@ footer{
   position: absolute;
   bottom: 40px;
 }
+
+.droppable{
+  background-color:#ffe0ec ;
+}

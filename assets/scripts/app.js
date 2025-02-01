@@ -90,6 +90,7 @@ class ProjectItem {
     this.updateProjectListsHandler = updateProjectListsFunction;
     this.connectMoreInfoButton();
     this.connectSwitchButton(type);
+    this.connectDrag();
   }
 
   showMoreInfoHandler() {
@@ -110,6 +111,14 @@ class ProjectItem {
     );
     tooltip.attach();
     this.hasActiveTooltip = true;
+  }
+
+  connectDrag() {
+    document.getElementById(this.id).addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", this.id);
+      event.dataTransfer.affectAllowed = "move";
+      // console.log(this.id);
+    });
   }
 
   connectMoreInfoButton() {
@@ -144,6 +153,7 @@ class ProjectItem {
 }
 
 class ProjectList {
+
   projects = [];
 
   constructor(type) {
@@ -155,6 +165,43 @@ class ProjectList {
       );
     }
     console.log(this.projects);
+    this.connectDroppable();
+  }
+
+  connectDroppable() {
+
+    const list = document.querySelector(`#${this.type}-projects ul`);
+
+    list.addEventListener("dragenter", (event) => {
+      if (event.dataTransfer.types[0] === "text/plain") {
+        list.parentElement.classList.add("droppable");
+        event.preventDefault();
+      }
+    });
+
+    list.addEventListener("dragover", (event) => {
+      if (event.dataTransfer.types[0] === "text/plain") {
+        event.preventDefault();
+      }
+    });
+
+    list.addEventListener("dragleave", (event) => {
+      if (event.relatedTarget.closest(`#${this.type}-projects ul`) !== list) {
+        list.parentElement.classList.remove("droppable");
+      }
+    });
+
+    list.addEventListener('drop', event=>{
+      const prjId = event.dataTransfer.getData('text/plain');
+       if(this.projects.find(p => p.id === prjId)) {
+          return;
+       }
+       document.getElementById(prjId)
+       .querySelector('button:last-of-type')
+       .click();
+       list.parentElement.classList.remove('droppable');
+       event.preventDefault();
+    })
   }
 
   setSwitchHandlerFunction(setSwitchHandlerFunction) {
@@ -175,7 +222,6 @@ class ProjectList {
 }
 
 class App {
-
   static init() {
     const activeProjectList = new ProjectList("active");
     const finishedProjectList = new ProjectList("finished");
@@ -195,8 +241,8 @@ class App {
     // }, 3000)
   }
   static startAnalytics() {
-    const analyticsScript = document.createElement('script');
-    analyticsScript.src = 'assets/scripts/analytics.js';
+    const analyticsScript = document.createElement("script");
+    analyticsScript.src = "assets/scripts/analytics.js";
     analyticsScript.defer = true;
     document.head.append(analyticsScript);
   }
