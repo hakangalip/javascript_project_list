@@ -114,11 +114,15 @@ class ProjectItem {
   }
 
   connectDrag() {
-    document.getElementById(this.id).addEventListener("dragstart", (event) => {
+    let item = document.getElementById(this.id)
+    item.addEventListener("dragstart", (event) => {
       event.dataTransfer.setData("text/plain", this.id);
       event.dataTransfer.affectAllowed = "move";
       // console.log(this.id);
     });
+    item.addEventListener('dragend', event=> {
+      console.log(event);
+    })
   }
 
   connectMoreInfoButton() {
